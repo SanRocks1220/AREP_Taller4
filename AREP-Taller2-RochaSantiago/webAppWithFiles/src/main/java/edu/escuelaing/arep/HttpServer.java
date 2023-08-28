@@ -2,6 +2,7 @@ package edu.escuelaing.arep;
 
 import java.io.*;
 import java.net.*;
+import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -144,37 +145,47 @@ public class HttpServer {
      */
     public static String getFileData(String uriString) throws IOException {
         String fileName = uriString.split("=")[1];
-        String[] allFileContent = {};
         String fileData = "";
-        String fileFormat = "";
-        if (inCache(fileName)) {
-            fileFormat = fileName.split("\\.")[1];
-            fileData = getFromCache(fileName);
-        } else {
-            allFileContent = getFiles("AREP-Taller2-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName); // Actualiza la ruta
-            fileData = allFileContent[0];
-            fileFormat = allFileContent[1];
-            saveInCache(fileName, fileData);
-        }
+        String fileFormat = getFormat(fileName);
         String[] imgFormats = {"png", "jpg", "gif"};
+        Boolean img = false;
         for (String format : imgFormats) {
             if (fileFormat.equals(format)) {
-                //String imageSrc = "data:image/" + format + ";base64," + fileData;
-                String imgTag = "<img src='" + fileData + "'>";
-                String response = "HTTP/1.1 200 OK\r\n"
-                        + "Content-Type: text/html\r\n"
-                        + "\r\n"
-                        + "<!DOCTYPE html>\r\n"
-                        + "<html>\r\n"
-                        + "    <head>\r\n"
-                        + "        <title>File Content</title>\r\n"
-                        + "    </head>\r\n"
-                        + "    <body>\r\n"
-                        + (imgTag) + "\r\n"
-                        + "    </body>\r\n"
-                        + "</html>";
-                return response;
+                img = true;
             }
+        }
+
+        if (inCache(fileName)) {
+            fileData = getFromCache(fileName);
+        } else {
+            if(!img){
+                fileData = getFiles("AREP-Taller2-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
+                saveInCache(fileName, fileData);
+            } else {
+                byte[] imageBytes = getImageBytes("AREP-Taller2-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
+                fileData = Base64.getEncoder().encodeToString(imageBytes);
+                //System.out.println("<img src=\"data:image/jpeg;base64," + fileData + "\" alt=\"Mi Imagen\">");
+                saveInCache(fileName, fileData);
+            }
+            
+        }
+        if (img) {
+            //String imageSrc = "data:image/" + format + ";base64," + fileData;
+            //String imgTag = "<img src='" + imageSrc + "'>";
+
+            String response = "HTTP/1.1 200 OK\r\n"
+                    + "Content-Type: text/html\r\n"
+                    + "\r\n"
+                    + "<!DOCTYPE html>\r\n"
+                    + "<html>\r\n"
+                    + "    <head>\r\n"
+                    + "        <title>File Content</title>\r\n"
+                    + "    </head>\r\n"
+                    + "    <body>\r\n"
+                    + "         <center><img src=\"data:image/jpeg;base64," + fileData + "\" alt=\"Mi Imagen\"></center>" + "\r\n"
+                    + "    </body>\r\n"
+                    + "</html>";
+            return response;
         }
         String response = "HTTP/1.1 200 OK\r\n"
             + "Content-Type: " + fileFormat + "/html\r\n"
@@ -368,18 +379,19 @@ public class HttpServer {
                 //
     }
 
-    public static String[] getFiles(String path) {
+    public static String getFormat(String fileName) {
+        System.out.println(fileName);
+        String format = fileName.split("\\.")[1];
+        return format;
+    }
 
-        System.out.println(path);
-        String format = path.split("\\.")[1];
-       
-
+    public static String getFiles(String path) {
         // Crear un objeto File con la ruta del archivo
         File archivo = new File(path);
         if (!archivo.exists()) {
-            String[] noContent = {"El archivo no existe", ".txt"};
+            String noContent = "El archivo no existe";
             return noContent;
-        }
+        } 
 
         byte[] buffer = new byte[(int) archivo.length()];
 
@@ -390,13 +402,35 @@ public class HttpServer {
             // Convertir los bytes en una cadena y mostrar el contenido del archivo
             String content = new String(buffer);
 
-            String[] allContent = {content, format};
-
-            return allContent;
+            return content;
 
         } catch (IOException e) {
             System.out.println("Error al leer el archivo: " + e.getMessage());
             return null;
+        }
+    }
+
+    public static byte[] getImageBytes(String imagePath) {
+        File imageFile = new File(imagePath);
+        
+        if (!imageFile.exists() || !imageFile.isFile()) {
+            return null; // El archivo no existe o no es válido
+        }
+        
+        try {
+            FileInputStream fis = new FileInputStream(imageFile);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                baos.write(buffer, 0, bytesRead);
+            }
+            
+            return baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null; // Error al leer el archivo
         }
     }
 
