@@ -3,6 +3,8 @@ package edu.escuelaing.arep;
 import java.io.*;
 import java.net.*;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,14 +19,31 @@ public class HttpServer {
     static ExecutorService threadPool = Executors.newFixedThreadPool(10); // Se puede ajustar el número de hilos
 
     private static ServerSocket serverSocket;
+    static HttpServer instance = new HttpServer();
+
+    private static Map<String, ServicioStr> servicios = new HashMap<String, ServicioStr>();
 
     /**
      * Constructor de la clase HttpServer.
      * Encargado de inicializar un objeto de la clase para ser alcanzado de forma estatica.
      * @param serverSocket Socket a abrir para permitir la conexion.
      */
-    public HttpServer(ServerSocket serverSocket) {
-        HttpServer.serverSocket = serverSocket;
+    private HttpServer(){}
+
+    public static HttpServer getInstance(){
+        return instance;
+    }
+
+    public static void get(String url, ServicioStr service){
+        servicios.put(url, service);
+    }
+
+    private ServicioStr buscar(String resource){
+        return servicios.get(resource);
+    }
+
+    private void getServicio(){
+
     }
 
     /** 
@@ -34,21 +53,21 @@ public class HttpServer {
      * @throws IOException Excepcion arrojada en caso de no poder establecer la conexion.
      */
 
-    public static void main(String[] args) throws IOException {
+    public void start(String[] args) throws IOException {
         ServerSocket serverSocket = null;
         try {
-            serverSocket = new ServerSocket(35000);
+            HttpServer.serverSocket = new ServerSocket(35000);
         } catch (IOException e) {
             System.err.println("Could not listen on port: 35000.");
             System.exit(1);
         }
     
-        HttpServer httpServer = new HttpServer(serverSocket);
+        //HttpServer httpServer = new HttpServer(serverSocket);
     
         boolean running = true;
         while (running) {
             System.out.println("Listo para recibir ...");
-            httpServer.startServer(); // Pass the clientSocket to startServer method
+            instance.startServer(); // Pass the clientSocket to startServer method
         }
     
         serverSocket.close();
@@ -117,6 +136,8 @@ public class HttpServer {
                 }
             }
             System.out.println("Uri: " + uriString);
+
+            //TODO No solo /getFileData
 
             String outputLine = "";
             if (uriString.startsWith("/getFileData")) {
