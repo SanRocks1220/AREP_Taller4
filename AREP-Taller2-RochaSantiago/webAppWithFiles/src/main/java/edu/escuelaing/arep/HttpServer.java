@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Crea una conexion para App Web en la que solicitar informacion sobre peliculas directo de la API.
+ * Crea una conexion para App Web en la que solicitar archivos desde el disco duro.
  * @author Santiago Andres Rocha C.
  */
 public class HttpServer {
@@ -137,10 +137,10 @@ public class HttpServer {
     }
 
     
-    /** 
-     * Conecta con la clase HttpConnection y solicita informacion sobre las peliculas indicadas.
-     * @param uriString uri para tomar el nombre del archivo.
-     * @return String Formato para poder imprimir el resultado JSON retornado.
+    /**
+     * Metodo que consigue el contenido de los archivos a buscar en el disco duro.
+     * @param uriString Corresponde al indicador de busqueda para los recursos.
+     * @return Respuesta a ser puesta en pantalla con html.
      * @throws IOException Excepcion arrojada en caso de no poder establecer la conexion.
      */
     public static String getFileData(String uriString) throws IOException {
@@ -206,7 +206,7 @@ public class HttpServer {
 
     
     /** 
-     * Verifica si la pelicula ya ha sido consultada o no anteriormente.
+     * Verifica si el archivo ya ha sido consultado o no anteriormente.
      * @param fileName Nombre del archivo a buscar en cache.
      * @return boolean True si ya se ha buscado previamente, False si es la primera vez.
      */
@@ -219,7 +219,7 @@ public class HttpServer {
     /** 
      * Retorna los datos almacenados en cache del archivo que se solicite.
      * @param fileName Nombre del archivo de la que tomar los datos en cache.
-     * @return String Datos completos en JSON sobre la pelicula solicitada
+     * @return String Datos completos del archivo solicitado.
      */
     public static String getFromCache(String fileName){
         System.out.println("Ya está en caché, no busca en el Disco Duro");
@@ -236,6 +236,83 @@ public class HttpServer {
         System.out.println("No está en caché, busca en el Disco Duro");
         cache.put(fileName, fileData);
     }
+
+    /**
+     * Metodo que extrae el formato o la extension del archivo a consultar.
+     * @param fileName Nombre del archivo, incluyendo su formato o extension.
+     * @return Formato o extension del archivo requerido
+     */
+    public static String getFormat(String fileName) {
+        System.out.println(fileName);
+        String format = "";
+        try{
+            format = fileName.split("\\.")[1];
+        } catch(ArrayIndexOutOfBoundsException e) {
+            format = "NoFormat";
+        }
+        
+        return format;
+    }
+
+    /**
+     * Metodo que retorna el contenido del archivo especificado en el directorio. Este archivo debe poder ser leido como texto.
+     * @param path Ruta y nombre del archivo a buscar.
+     * @return Contenido del archivo especificado.
+     */
+    public static String getFiles(String path) {
+        // Crear un objeto File con la ruta del archivo
+        File archivo = new File(path);
+        if (!archivo.exists()) {
+            String noContent = "El archivo no existe";
+            return noContent;
+        } 
+
+        byte[] buffer = new byte[(int) archivo.length()];
+
+        try (FileInputStream fis = new FileInputStream(archivo)) {
+            // Leer los datos del archivo en el arreglo de bytes
+            fis.read(buffer);
+
+            // Convertir los bytes en una cadena y mostrar el contenido del archivo
+            String content = new String(buffer);
+
+            return content;
+
+        } catch (IOException e) {
+            System.out.println("Error al leer el archivo: " + e.getMessage());
+            return null;
+        }
+    };
+
+    /**
+     * Metodo que retorna el contenido del archivo especificado en el directorio. Este archivo debe poder tener un formato de imagen y estar codificado.
+     * @param imagePath Ruta y nombre del archivo imagen a buscar.
+     * @return Contenido del archivo imagen especificado.
+     */
+    public static byte[] getImageBytes(String imagePath) {
+        File imageFile = new File(imagePath);
+        
+        if (!imageFile.exists() || !imageFile.isFile()) {
+            return null; // El archivo no existe o no es válido
+        }
+        
+        try {
+            FileInputStream fis = new FileInputStream(imageFile);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                baos.write(buffer, 0, bytesRead);
+            }
+            fis.close();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null; // Error al leer el archivo
+        }
+    }
+
     
     /**
      * Genera los formularos para retornar informacion solicitada.
@@ -377,62 +454,5 @@ public class HttpServer {
                 // Plantilla tomada de:
                 // https://plantillashtmlgratis.com/efectos-css/formularios-de-contacto-css/formulario-de-retroalimentacion-de-interfaz-de-usuario-retro/
                 //
-    }
-
-    public static String getFormat(String fileName) {
-        System.out.println(fileName);
-        String format = fileName.split("\\.")[1];
-        return format;
-    }
-
-    public static String getFiles(String path) {
-        // Crear un objeto File con la ruta del archivo
-        File archivo = new File(path);
-        if (!archivo.exists()) {
-            String noContent = "El archivo no existe";
-            return noContent;
-        } 
-
-        byte[] buffer = new byte[(int) archivo.length()];
-
-        try (FileInputStream fis = new FileInputStream(archivo)) {
-            // Leer los datos del archivo en el arreglo de bytes
-            fis.read(buffer);
-
-            // Convertir los bytes en una cadena y mostrar el contenido del archivo
-            String content = new String(buffer);
-
-            return content;
-
-        } catch (IOException e) {
-            System.out.println("Error al leer el archivo: " + e.getMessage());
-            return null;
-        }
-    }
-
-    public static byte[] getImageBytes(String imagePath) {
-        File imageFile = new File(imagePath);
-        
-        if (!imageFile.exists() || !imageFile.isFile()) {
-            return null; // El archivo no existe o no es válido
-        }
-        
-        try {
-            FileInputStream fis = new FileInputStream(imageFile);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                baos.write(buffer, 0, bytesRead);
-            }
-            
-            return baos.toByteArray();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null; // Error al leer el archivo
-        }
-    }
-
-    
+    }    
 }
