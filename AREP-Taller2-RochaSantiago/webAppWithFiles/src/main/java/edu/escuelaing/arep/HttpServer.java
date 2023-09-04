@@ -10,7 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Crea una conexion para App Web en la que solicitar archivos desde el disco duro.
+ * Clase que implementa un servidor HTTP básico para solicitar archivos desde el disco duro.
+ * Esta clase permite manejar solicitudes GET y POST.
  * @author Santiago Andres Rocha C.
  */
 public class HttpServer {
@@ -26,31 +27,60 @@ public class HttpServer {
     private static Map<String, ServicioStr> servicios = new HashMap<String, ServicioStr>();
 
     /**
-     * Constructor de la clase HttpServer.
-     * Encargado de inicializar un objeto de la clase para ser alcanzado de forma estatica.
-     * @param serverSocket Socket a abrir para permitir la conexion.
+     * Constructor privado de la clase HttpServer.
+     * Utiliza el patrón Singleton para asegurar una sola instancia de HttpServer.
      */
     private HttpServer(){}
 
+    /**
+     * Obtiene la única instancia de HttpServer.
+     * @return Instancia única de HttpServer.
+     */
     public static HttpServer getInstance(){
         return instance;
     }
 
+    /**
+     * Obtiene el mapa de servicios registrados en el servidor.
+     * @return Un mapa que contiene los servicios registrados con sus rutas como clave.
+     */
+    public static Map<String, ServicioStr> getServicios() {
+        return servicios;
+    }
+
+    /**
+     * Registra un servicio para responder a solicitudes GET.
+     * @param url URL del servicio.
+     * @param service Servicio que implementa la interfaz ServicioStr.
+     */
     public static void get(String url, ServicioStr service){
         servicios.put(url, service);
     }
 
-    private static ServicioStr buscar(String resource){
+    /**
+     * Registra un servicio para responder a solicitudes POST.
+     * @param url URL del servicio.
+     * @param service Servicio que implementa la interfaz ServicioStr.
+     */
+    public static void post(String url, ServicioStr service){
+        servicios.put(url, service);
+    }
+
+    /**
+     * Busca un servicio registrado para una URL dada.
+     * @param resource URL del servicio a buscar.
+     * @return Servicio que responde a la URL especificada.
+     */
+    public static ServicioStr buscar(String resource){
         return servicios.get(resource);
     }
 
-    /** 
-     * Metodo principal de la clase HttpServer.
-     * Encargada de crear el socket de conexion y arrancar el servidor para recibir solicitudes.
-     * @param args Argumentos para la inicializacion de la clase.
-     * @throws IOException Excepcion arrojada en caso de no poder establecer la conexion.
+    /**
+     * Inicia el servidor HTTP.
+     * Escucha y maneja solicitudes entrantes en un bucle infinito.
+     * @param args Argumentos para la inicialización de la clase.
+     * @throws IOException Excepción arrojada en caso de no poder establecer la conexión.
      */
-
      public void start(String[] args) {
         try {
             serverSocket = new ServerSocket(35000);
@@ -65,10 +95,9 @@ public class HttpServer {
         }
     }   
     
-
-    // Se agrega un método shutdown para detener el ThreadPool cuando sea necesario
     /**
-     * Encargado de terminar y cerrar las conecciones cuando se trabaja con concurrencia.
+     * Detiene el servidor HTTP y cierra el ThreadPool y el socket del servidor.
+     * No se utiliza en la versión actual del codigo.
      */
     public static void shutdown() {
         threadPool.shutdown();
@@ -79,10 +108,9 @@ public class HttpServer {
         }
     }
 
-    
-    /** 
-     * Encargado de procesar las solicitudes realizadas desde el cliente.
-     * @param clientSocket Socket destinado a la conexion.
+    /**
+     * Procesa una solicitud HTTP entrante.
+     * @param clientSocket Socket destinado a la conexión con el cliente.
      */
     public void handleRequest(Socket clientSocket) {
         try {
@@ -97,12 +125,13 @@ public class HttpServer {
                 if (inputLine.startsWith("GET")) {
                     uriString = inputLine.split(" ")[1];
                     break;
+                } else if (inputLine.startsWith("POST")) {
+                    uriString = inputLine.split(" ")[1];
+                    break;
                 }
             }
 
-            //TODO Start
             String outputLine = "";
-
             if(!uriString.equals("/favicon.ico") && !uriString.equals("/")){
                 String[] uriParts = uriString.split("\\?");
                 String serviceToUse = uriParts[0];
@@ -112,8 +141,6 @@ public class HttpServer {
             } else {
                 outputLine = indexResponse();
             }
-
-            //System.out.println(outputLine);
             out.println(outputLine);
             
             out.close();
@@ -125,15 +152,13 @@ public class HttpServer {
         }
     }
 
-    
     /**
-     * Metodo que consigue el contenido de los archivos a buscar en el disco duro.
-     * @param uriString Corresponde al indicador de busqueda para los recursos.
-     * @return Respuesta a ser puesta en pantalla con html.
-     * @throws IOException Excepcion arrojada en caso de no poder establecer la conexion.
+     * Obtiene el contenido de un archivo desde el disco duro o el cache.
+     * @param uriString La URI que indica el recurso a buscar.
+     * @return Respuesta HTTP con el contenido del archivo o mensaje de error.
+     * @throws IOException Excepción arrojada en caso de no poder establecer la conexión.
      */
     public static String getFileData(String uriString){
-        //String fileName = uriString.split("=")[1];
         String fileName = uriString;
         String fileData = "";
 
@@ -191,10 +216,10 @@ public class HttpServer {
     }
 
     
-    /** 
-     * Verifica si el archivo ya ha sido consultado o no anteriormente.
-     * @param fileName Nombre del archivo a buscar en cache.
-     * @return boolean True si ya se ha buscado previamente, False si es la primera vez.
+    /**
+     * Verifica si un archivo ya ha sido consultado previamente y está en caché.
+     * @param fileName Nombre del archivo a buscar en caché.
+     * @return true si el archivo está en caché, false en caso contrario.
      */
     public static boolean inCache(String fileName) {
         return cache.containsKey(fileName);
@@ -202,10 +227,10 @@ public class HttpServer {
     
 
     
-    /** 
-     * Retorna los datos almacenados en cache del archivo que se solicite.
-     * @param fileName Nombre del archivo de la que tomar los datos en cache.
-     * @return String Datos completos del archivo solicitado.
+    /**
+     * Obtiene los datos de un archivo desde el caché.
+     * @param fileName Nombre del archivo de donde tomar los datos en caché.
+     * @return Datos completos del archivo solicitado.
      */
     public static String getFromCache(String fileName){
         System.out.println("Ya está en caché, no busca en el Disco Duro");
@@ -213,9 +238,9 @@ public class HttpServer {
     }
 
     
-    /** 
-     * Almacena en cache los datos del archivo una vez esta sea buscada.
-     * @param fileName Nombre del archivo a la que asociar los datos.
+    /**
+     * Guarda los datos de un archivo en caché.
+     * @param fileName Nombre del archivo a asociar los datos.
      * @param fileData Datos del archivo a guardar asociados a su nombre.
      */
     public static void saveInCache(String fileName, String fileData){
@@ -224,9 +249,9 @@ public class HttpServer {
     }
 
     /**
-     * Metodo que extrae el formato o la extension del archivo a consultar.
-     * @param fileName Nombre del archivo, incluyendo su formato o extension.
-     * @return Formato o extension del archivo requerido
+     * Obtiene el formato o la extensión de un archivo a partir de su nombre.
+     * @param fileName Nombre del archivo que incluye su formato o extensión.
+     * @return Formato o extensión del archivo.
      */
     public static String getFormat(String fileName) {
         System.out.println(fileName);
@@ -241,7 +266,7 @@ public class HttpServer {
     }
 
     /**
-     * Metodo que retorna el contenido del archivo especificado en el directorio. Este archivo debe poder ser leido como texto.
+     * Obtiene el contenido de un archivo no imagen desde el disco duro.
      * @param path Ruta y nombre del archivo a buscar.
      * @return Contenido del archivo especificado.
      */
@@ -271,9 +296,9 @@ public class HttpServer {
     };
 
     /**
-     * Metodo que retorna el contenido del archivo especificado en el directorio. Este archivo debe poder tener un formato de imagen y estar codificado.
-     * @param imagePath Ruta y nombre del archivo imagen a buscar.
-     * @return Contenido del archivo imagen especificado.
+     * Obtiene el contenido de un archivo de imagen desde el disco duro y lo codifica en Base64.
+     * @param imagePath Ruta y nombre del archivo de imagen a buscar.
+     * @return Contenido del archivo de imagen especificado en formato Base64.
      */
     public static byte[] getImageBytes(String imagePath) {
         File imageFile = new File(imagePath);
@@ -298,7 +323,12 @@ public class HttpServer {
             return null; // Error al leer el archivo
         }
     }
-    
+
+    /**
+     * Genera una respuesta HTTP con un saludo personalizado.
+     * @param str Nombre o mensaje a incluir en el saludo.
+     * @return Respuesta HTTP en formato HTML con un saludo personalizado.
+     */
     public static String helloFormer(String str) {
         return "HTTP/1.1 200 OK\r\n"
         + "Content-Type: text/html\r\n"
@@ -317,9 +347,8 @@ public class HttpServer {
 
     
     /**
-     * Genera los formularos para retornar informacion solicitada.
-     * Hace uso del metodo getCSS() para agregar estilo al momento de enseñarse en pantalla.
-     * @return String Formularios con GET y POST en su formato HTML, con un CSS basico aplicado
+     * Genera una respuesta HTML con un formulario básico.
+     * @return Respuesta HTML que muestra un formulario.
      */
     public static String indexResponse() {
         String outputLine = "HTTP/1.1 200 OK\r\n"
@@ -346,8 +375,8 @@ public class HttpServer {
     }
     
     /**
-     * Define y aplica el estilo de la pagina a mostrar en pantalla.
-     * @return Estilo a añadir al Html para enseñarse en pantalla.
+     * Define y aplica el estilo CSS de la página.
+     * @return Estilo CSS a aplicar en la página HTML.
      */
     public static String getCSS() {
         return "<style>\r\n"
