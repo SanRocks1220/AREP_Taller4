@@ -1,39 +1,37 @@
-# Web Server Concurrente en Java - App Web para Obtener Archivos
+# Web Server en Java para Obtener Archivos desde el Disco Duro
 
-Este proyecto consiste en la implementación de un servidor web concurrente en Java que permite solicitar archivos desde el disco duro a través de una aplicación web. El servidor es capaz de recibir solicitudes HTTP GET y POST para obtener el contenido de los archivos especificados. El servidor también implementa un mecanismo de caché para almacenar los datos de los archivos consultados previamente y mejorar la eficiencia.
+Este proyecto consiste en la implementación de un servidor web en Java que permite solicitar archivos desde el disco duro a través de una aplicación web. El servidor es capaz de recibir solicitudes HTTP GET y POST para obtener el contenido de los archivos especificados. Además, se utiliza el concepto de funciones Lambda para crear el backend que maneja las diferentes URL.
 
 ## Arquitectura y Patrones de Diseño
 
-El proyecto sigue una arquitectura de servidor web concurrente, donde el servidor utiliza un `ServerSocket` para aceptar conexiones de clientes y maneja las solicitudes en hilos separados utilizando un `ThreadPool` para mejorar la eficiencia y permitir la concurrencia.
-
-El servidor implementa el patrón Singleton para asegurarse de que solo exista una instancia de la clase `HttpServer`, garantizando así que el servidor sea único y controlado.
+El proyecto se centra en una arquitectura simple de servidor web que utiliza funciones Lambda para manejar las solicitudes en diferentes URL. Cada URL se asigna a una función Lambda que se encarga de procesar la solicitud correspondiente. Esto proporciona una estructura modular y flexible para crear un servidor web que responde a las solicitudes de manera eficiente.
 
 ## Funcionamiento
 
-El proyecto consta de la siguiente clase principal:
+El proyecto consta de una clase principal:
 
-- **`HttpServer`**: Esta clase representa el servidor web concurrente. Utiliza un `ServerSocket` para aceptar conexiones de clientes y delega el procesamiento de cada solicitud a threads separados. Implementa métodos para manejar solicitudes HTTP GET y POST, obtener archivos del disco duro, guardar y buscar datos en caché, y generar respuestas HTML.
+- **`HttpServer`**: Esta clase representa el servidor web. Utiliza funciones Lambda para asignar una acción específica a cada URL. Cuando se recibe una solicitud en una URL determinada, se ejecuta la función Lambda correspondiente, que maneja la solicitud y genera una respuesta adecuada.
+- **`MySparkExample`**: Esta clase inicializa el servidor web, por lo que desde aquí es posible comenzar a hacer las solicitudes.
 
 ## Estrategias de Programación Empleadas
 
-En este proyecto, se aplicaron diversas estrategias de programación:
+En este proyecto, se aplicaron las siguientes estrategias de programación:
 
-1. **Programación Multihilo**: Se utiliza la programación multihilo para lograr la concurrencia en el servidor. Cada cliente que se conecta al servidor se maneja en un hilo separado, lo que permite que múltiples solicitudes sean atendidas simultáneamente.
-2. **Uso de Threads y ExecutorService**: Los hilos se utilizan para crear un modelo concurrente en el servidor. Se emplea la clase `ExecutorService` para administrar un pool de hilos que manejan las solicitudes entrantes.
-3. **Sockets en Java**: Se utiliza la clase `ServerSocket` para aceptar conexiones entrantes de los clientes y para establecer la comunicación entre el servidor y los clientes.
-4. **Manejo de Caché**: Se implementa un mecanismo de caché para almacenar los datos de los archivos consultados previamente. Esto evita búsquedas repetitivas en el disco duro y mejora la eficiencia.
-5. **Interfaz de Usuario HTML**: Se genera una interfaz de usuario simple en HTML para interactuar con el servidor. Se crean formularios GET y POST para solicitar nombres de archivos y se aplica un estilo CSS básico para mejorar la presentación.
+1. **Funciones Lambda para el Backend**: En lugar de utilizar una arquitectura de servidor web concurrente, se aprovechan las funciones Lambda para asignar comportamientos específicos a cada URL. Esto simplifica el código y permite un enfoque más modular.
+
+2. **Manejo de Sockets en Java**: Se utiliza la clase `ServerSocket` para aceptar conexiones entrantes de los clientes y para establecer la comunicación entre el servidor y los clientes.
+
+3. **Interfaz de Usuario HTML**: Se genera una interfaz de usuario simple en HTML para interactuar con el servidor. Se crean formularios GET y POST para solicitar nombres de archivos y se aplica un estilo CSS básico para mejorar la presentación.
 
 ## Pruebas
 
-Se han realizado pruebas exhaustivas para asegurarse de que el servidor web concurrente funcione correctamente y maneje de manera adecuada las solicitudes HTTP. Se han abordado varios aspectos en las pruebas para garantizar la calidad del código y la funcionalidad del servidor.
+Se han realizado pruebas exhaustivas para asegurarse de que el servidor web funcione correctamente y maneje de manera adecuada las solicitudes HTTP. Se han abordado varios aspectos en las pruebas para garantizar la calidad del código y la funcionalidad del servidor.
 
 ### Pruebas Unitarias
 
 Se han implementado pruebas unitarias utilizando el framework de pruebas JUnit. Estas pruebas se centran en probar las diferentes funciones y métodos de la clase `HttpServer` de manera aislada para asegurarse de que produzcan los resultados esperados. Las pruebas abordan casos de éxito y casos de borde, como:
 
 - Prueba de obtención de datos de archivos desde el disco duro.
-- Prueba de almacenamiento y recuperación de datos en caché.
 - Prueba de generación de respuestas HTML para solicitudes GET y POST.
 - Prueba de manejo adecuado de formatos de archivo y tipos MIME.
 
@@ -41,10 +39,8 @@ Se han implementado pruebas unitarias utilizando el framework de pruebas JUnit. 
 
 Se han realizado pruebas de integración para verificar que los componentes del servidor trabajen correctamente en conjunto. Estas pruebas simulan el flujo completo de una solicitud HTTP, desde la conexión del cliente hasta la generación de la respuesta por parte del servidor. Se han abordado los siguientes aspectos:
 
-- Prueba de manejo concurrente de múltiples solicitudes.
 - Prueba de conexión y comunicación adecuada entre clientes y servidor.
 - Prueba de procesamiento de solicitudes GET y POST.
-- Prueba de funcionamiento adecuado del mecanismo de caché.
 
 ### Pruebas Manuales
 
@@ -52,12 +48,11 @@ Además de las pruebas automatizadas, se han realizado pruebas manuales exhausti
 
 - Ingresar nombres de archivos válidos e inválidos en los formularios.
 - Hacer solicitudes GET y POST desde el navegador.
-- Verificar la visualización correcta de archivos de texto e imágenes en las respuestas.
-
+- Verificar la visualización correcta de archivos de texto en las respuestas.
 
 ## Cómo Usar Este Proyecto
 
-Este proyecto se ha configurado para utilizarse con Maven como herramienta de administración de dependencias y construcción. Aquí están los pasos para ejecutar y probar el servidor web concurrente:
+Este proyecto se ha configurado para utilizarse con Maven como herramienta de administración de dependencias y construcción. Aquí están los pasos para ejecutar y probar el servidor web:
 
 ### Requisitos Previos
 
@@ -70,16 +65,109 @@ Asegurarse de tener instalados los siguientes elementos en su sistema:
 
 1. **Clonar el Repositorio**: Abrir una terminal y navegar hasta el directorio donde se desee clonar el repositorio.
 2. **Compilar el Proyecto**: Ejecutar el comando `mvn compile`.
-3. **Ejecutar el Servidor**: Ejecutar el comando `mvn exec:java -Dexec.mainClass="edu.escuelaing.arep.HttpServer"`.
-4. **Acceder a la Interfaz de Usuario**: Abrir un navegador y entrar a `http://localhost:35000/` para acceder a la interfaz de usuario.
+3. **Ejecutar el Servidor**: Ejecutar el comando `mvn exec:java -Dexec.mainClass="edu.escuelaing.arep.MySparkExample"`.
+4. **Acceder a la Interfaz de Usuario**: Abrir un navegador y entrar a `http://localhost:35000/` para acceder a la interfaz de usuario principal.
+5. **Realizar solicitudes con las URL**: Posterior a `http://localhost:35000/` puede hacer uso de:
+    * `/hello?name=<Su Nombre Aquí>`
+    * `/helloPost?name=<Su Nombre Aquí>`
+    * `/getFileData?name=<Archivo a Buscar Aquí>`
+    * `/getFileDataPost?name=<Archivo a Buscar Aquí>`
+
 
 ## Buenas Prácticas y Consideraciones
 
-- Se implementó el patrón Singleton para garantizar que solo haya una instancia de la clase `HttpServer` y se pueda acceder a ella de manera controlada.
-- Se utiliza un `ExecutorService` para administrar el pool de hilos y manejar las solicitudes de manera concurrente, lo que optimiza el uso de recursos y permite un manejo eficiente de las solicitudes.
-- Se aplican buenas prácticas de programación, como nombres descriptivos de variables y métodos, división de responsabilidades en clases y métodos pequeños, y manejo adecuado de excepciones.
-- Se implementa un mecanismo de caché para almacenar los datos de los archivos consultados previamente, lo que mejora la eficiencia y reduce las búsquedas repetitivas en el disco duro.
+- Se utiliza el concepto de funciones Lambda para crear un backend modular y flexible que responde a las solicitudes en diferentes URL.
+- Se implementan buenas prácticas de programación, como nombres descriptivos de variables y métodos, división de responsabilidades en funciones Lambda y manejo adecuado de excepciones.
+- Se proporciona una interfaz de usuario sencilla en HTML para interactuar con el servidor de manera intuitiva.
+
+## Ejemplo de Desarrollo de Aplicaciones
+En este ejemplo, crearemos una aplicación web simple que permite a los usuarios cargar un archivo de texto al servidor y luego ver su contenido en una página web.
+1. Definiremos una clase que implementa la interfaz ServicioStr para manejar la carga de archivos y la visualización del contenido. 
+    ```
+    import edu.escuelaing.arep.ServicioStr;
+    import java.io.BufferedReader;
+    import java.io.FileReader;
+    import java.io.IOException;
+    import java.util.Map;
+
+    public class FileService implements ServicioStr {
+
+        @Override
+        public String handle(String fileName) {
+            // Construir el contenido HTML de la página de respuesta
+            StringBuilder response = new StringBuilder();
+            response.append("<!DOCTYPE html>\n<html>\n<head>\n");
+            response.append("<meta charset=\"UTF-8\">\n");
+            response.append("<title>Contenido del Archivo</title>\n");
+            response.append("</head>\n<body>\n");
+
+            try {
+                // Leer el contenido del archivo
+                FileReader fileReader = new FileReader(fileName);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    response.append("<p>").append(line).append("</p>\n");
+                }
+                bufferedReader.close();
+            } catch (IOException e) {
+                response.append("<p>Error al leer el archivo.</p>\n");
+            }
+
+            response.append("</body>\n</html>");
+
+            return response.toString();
+        }
+    }
+    ```
+
+2. Configuraremos el servidor para usar esta clase en una URL específica.
+    ```
+    import edu.escuelaing.arep.HttpServer;
+
+    public class MyWebApp {
+
+        public static void main(String[] args) {
+            // Configurar el servidor
+            HttpServer.get("/getFileContent", new FileService());
+
+            // Iniciar el servidor
+            HttpServer.getInstance().start(args);
+        }
+    }
+
+    ```
+3. Finalmente, crearemos una página HTML que permita a los usuarios cargar un archivo y ver su contenido.
+    ```
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Cargar Archivo</title>
+    </head>
+    <body>
+        <h1>Cargar Archivo</h1>
+        <form action="/getFileContent" method="GET">
+            <label for="fileName">Nombre del Archivo:</label>
+            <input type="text" id="fileName" name="fileName">
+            <input type="submit" value="Ver Contenido">
+        </form>
+    </body>
+    </html>
+    ```
+
+Cuando el usuario envía el formulario, el servidor obtiene el nombre del archivo de la URL, utiliza la clase FileService para leer el contenido del archivo y luego genera una página HTML que muestra el contenido.
+
+Ejemplo realizado son ayuda de [ChatGPT](https://chat.openai.com)
+
+## Ejecución de Proyecto en diferentes OS
+- Pendiente
 
 ## Autor
 
 - [Santiago Andres Rocha C.](https://github.com/SanRocks1220)
+
+## Colaboradores
+
+- [David Valencia](https://github.com/DavidVal6)
+- [ChatGPT](https://chat.openai.com)
