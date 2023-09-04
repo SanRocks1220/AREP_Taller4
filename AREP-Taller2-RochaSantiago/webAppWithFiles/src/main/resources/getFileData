@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>File Content</title>
+    </head>
+    <body>
+<pre>Esto es un texto de ejemplo
+Deberías ver esto en pantalla. :D</pre>
+    </body>
+</html>
+textoEjemplo.txt

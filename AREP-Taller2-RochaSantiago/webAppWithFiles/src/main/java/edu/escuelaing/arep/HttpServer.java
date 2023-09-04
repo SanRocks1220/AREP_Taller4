@@ -18,8 +18,10 @@ public class HttpServer {
     static ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
     static ExecutorService threadPool = Executors.newFixedThreadPool(10); // Se puede ajustar el número de hilos
 
-    private static ServerSocket serverSocket;
+    public static ServerSocket serverSocket;
     static HttpServer instance = new HttpServer();
+
+    public static PrintWriter out;
 
     private static Map<String, ServicioStr> servicios = new HashMap<String, ServicioStr>();
 
@@ -38,12 +40,8 @@ public class HttpServer {
         servicios.put(url, service);
     }
 
-    private ServicioStr buscar(String resource){
+    private static ServicioStr buscar(String resource){
         return servicios.get(resource);
-    }
-
-    private void getServicio(){
-
     }
 
     /** 
@@ -53,48 +51,19 @@ public class HttpServer {
      * @throws IOException Excepcion arrojada en caso de no poder establecer la conexion.
      */
 
-    public void start(String[] args) throws IOException {
-        ServerSocket serverSocket = null;
+     public void start(String[] args) {
         try {
-            HttpServer.serverSocket = new ServerSocket(35000);
+            serverSocket = new ServerSocket(35000);
+            System.out.println("Listo para recibir...");
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                handleRequest(clientSocket);
+            }
         } catch (IOException e) {
             System.err.println("Could not listen on port: 35000.");
             System.exit(1);
         }
-    
-        //HttpServer httpServer = new HttpServer(serverSocket);
-    
-        boolean running = true;
-        while (running) {
-            System.out.println("Listo para recibir ...");
-            instance.startServer(); // Pass the clientSocket to startServer method
-        }
-    
-        serverSocket.close();
-    }
-
-    /**
-     * Metodo encargado de encender y arrancar el servidor.
-     */
-    public void startServer() {
-        boolean running = true;
-        while (running) {
-            try {
-                System.out.println("Listo para recibir ...");
-                final Socket clientSocket = serverSocket.accept();
-    
-                threadPool.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        handleRequest(clientSocket);
-                    }
-                });
-            } catch (IOException e) {
-                System.err.println("Accept failed: " + e.getMessage());
-            }
-        }
-    }
-    
+    }   
     
 
     // Se agrega un método shutdown para detener el ThreadPool cuando sea necesario
@@ -115,42 +84,41 @@ public class HttpServer {
      * Encargado de procesar las solicitudes realizadas desde el cliente.
      * @param clientSocket Socket destinado a la conexion.
      */
-    public static void handleRequest(Socket clientSocket) {
+    public void handleRequest(Socket clientSocket) {
         try {
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            boolean firtsLine = true;
             String uriString = "";
-
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
+                //if(!inputLine.equals("GET /favicon.ico HTTP/1.1"))
                 System.out.println("Received: " + inputLine);
-                if (firtsLine) {
-                    firtsLine = false;
+                if (inputLine.startsWith("GET")) {
                     uriString = inputLine.split(" ")[1];
-                    System.out.println("Uri: " + uriString);
-                }
-                if (!in.ready()) {
                     break;
                 }
             }
-            System.out.println("Uri: " + uriString);
 
-            //TODO No solo /getFileData
-
+            //TODO Start
             String outputLine = "";
-            if (uriString.startsWith("/getFileData")) {
-                outputLine = getFileData(uriString);
+
+            if(!uriString.equals("/favicon.ico") && !uriString.equals("/")){
+                String[] uriParts = uriString.split("\\?");
+                String serviceToUse = uriParts[0];
+                String strToGive = uriParts[1].split("=")[1];
+
+                outputLine = buscar(serviceToUse).handle(strToGive);
             } else {
                 outputLine = indexResponse();
             }
 
+            //System.out.println(outputLine);
             out.println(outputLine);
+            
             out.close();
             in.close();
 
-            // Cerrar el socket después de completar la solicitud
             clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -164,9 +132,11 @@ public class HttpServer {
      * @return Respuesta a ser puesta en pantalla con html.
      * @throws IOException Excepcion arrojada en caso de no poder establecer la conexion.
      */
-    public static String getFileData(String uriString) throws IOException {
-        String fileName = uriString.split("=")[1];
+    public static String getFileData(String uriString){
+        //String fileName = uriString.split("=")[1];
+        String fileName = uriString;
         String fileData = "";
+
         String fileFormat = getFormat(fileName);
         String[] imgFormats = {"png", "jpg", "gif"};
         Boolean img = false;
@@ -185,15 +155,11 @@ public class HttpServer {
             } else {
                 byte[] imageBytes = getImageBytes("AREP-Taller2-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
                 fileData = Base64.getEncoder().encodeToString(imageBytes);
-                //System.out.println("<img src=\"data:image/jpeg;base64," + fileData + "\" alt=\"Mi Imagen\">");
                 saveInCache(fileName, fileData);
             }
             
         }
         if (img) {
-            //String imageSrc = "data:image/" + format + ";base64," + fileData;
-            //String imgTag = "<img src='" + imageSrc + "'>";
-
             String response = "HTTP/1.1 200 OK\r\n"
                     + "Content-Type: text/html\r\n"
                     + "\r\n"
@@ -209,20 +175,19 @@ public class HttpServer {
             return response;
         }
         String response = "HTTP/1.1 200 OK\r\n"
-            + "Content-Type: " + fileFormat + "/html\r\n"
+            + "Content-Type: text/html\r\n"
             + "\r\n"
             + "<!DOCTYPE html>\r\n"
             + "<html>\r\n"
             + "    <head>\r\n"
+            + "        <meta charset=\"UTF-8\">\r\n"
             + "        <title>File Content</title>\r\n"
             + "    </head>\r\n"
             + "    <body>\r\n"
             + "<pre>" + fileData + "</pre>\r\n"
             + "    </body>\r\n"
             + "</html>";
-            //+ "Archivo " + fileFormat + " al desnudo:\r\n"
-            //+ fileData.toString();
-                return response;
+        return response;
     }
 
     
@@ -333,6 +298,22 @@ public class HttpServer {
             return null; // Error al leer el archivo
         }
     }
+    
+    public static String helloFormer(String str) {
+        return "HTTP/1.1 200 OK\r\n"
+        + "Content-Type: text/html\r\n"
+        + "\r\n"
+        + "<!DOCTYPE html>\r\n"
+        + "<html>\r\n"
+        + "    <head>\r\n"
+        + "        <meta charset=\"UTF-8\">\r\n"
+        + "        <title>Salutation</title>\r\n"
+        + "    </head>\r\n"
+        + "    <body>\r\n"
+        + "         <h1> Hello " + str + "</h1>\r\n"
+        + "    </body>\r\n"
+        + "</html>";
+    } 
 
     
     /**
@@ -355,51 +336,9 @@ public class HttpServer {
                 + "    <body>\r\n"
                 + "        <div class=\"feedback-card\">\r\n"
                 + "            <div class=\"feedback-header\">\r\n"
-                + "                <h1>CONSULT FILES BY NAME (GET)</h1>\r\n"
+                + "                <h1>Pagina Principal</h1>\r\n"
+                + "                <h3>Si deseas acceder a funciones o recursos, debes hacerlo desde la URL ;)</h3>\r\n"
                 + "            </div>\r\n"
-                + "            <div class=\"feedback-body\">\r\n"
-                + "                <form action=\"/getFileData\">\r\n"
-                + "                    <label for=\"name\">File Name:</label><br>\r\n"
-                + "                    <input type=\"text\" id=\"name\" name=\"name\" value=\"\"><br><br>\r\n"
-                + "                    <button type=\"button\" onclick=\"loadGetMsg()\">Submit</button>\r\n"
-                + "                </form>\r\n"
-                + "                <div class=\"feedback-body__message\" id=\"getrespmsg\"></div>\r\n"
-                + "            </div>\r\n"
-                + "        </div>\r\n"
-                + "\r\n"
-                + "        <div class=\"feedback-card\">\r\n"
-                + "            <div class=\"feedback-header\">\r\n"
-                + "                <h1>CONSULT FILES BY NAME (POST)</h1>\r\n"
-                + "            </div>\r\n"
-                + "            <div class=\"feedback-body\">\r\n"
-                + "                <form action=\"/getFileData\">\r\n"
-                + "                    <label for=\"postname\">File Name:</label><br>\r\n"
-                + "                    <input type=\"text\" id=\"postname\" name=\"name\" value=\"\"><br><br>\r\n"
-                + "                    <button type=\"button\" onclick=\"loadPostMsg(postname)\">Submit</button>\r\n"
-                + "                </form>\r\n"
-                + "                <div class=\"feedback-body__message\" id=\"postrespmsg\"></div>\r\n"
-                + "            </div>\r\n"
-                + "        </div>\r\n"
-                + "\r\n"
-                + "        <script>\r\n"
-                + "            function loadGetMsg() {\r\n"
-                + "                let fileName = document.getElementById(\"name\").value;\r\n"
-                + "                const xhttp = new XMLHttpRequest();\r\n"
-                + "                xhttp.onload = function() {\r\n"
-                + "                    document.getElementById(\"getrespmsg\").innerHTML =\r\n"
-                + "                    this.responseText;\r\n"
-                + "                }\r\n"
-                + "                xhttp.open(\"GET\", \"/getFileData?name=\" + fileName);\r\n"
-                + "                xhttp.send();\r\n"
-                + "            }\r\n"
-                + "\r\n"
-                + "            function loadPostMsg(name) {\r\n"
-                + "                let url = \"/getFileDatapost?name=\" + name.value;\r\n"
-                + "                fetch(url, { method: 'POST' })\r\n"
-                + "                    .then(x => x.text())\r\n"
-                + "                    .then(y => document.getElementById(\"postrespmsg\").innerHTML = y);\r\n"
-                + "            }\r\n"
-                + "        </script>\r\n"
                 + "    </body>\r\n"
                 + "</html>";
     
@@ -475,5 +414,5 @@ public class HttpServer {
                 // Plantilla tomada de:
                 // https://plantillashtmlgratis.com/efectos-css/formularios-de-contacto-css/formulario-de-retroalimentacion-de-interfaz-de-usuario-retro/
                 //
-    }    
+    } 
 }
