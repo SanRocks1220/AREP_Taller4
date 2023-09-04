@@ -8,6 +8,11 @@ import java.io.IOException;
  */
 public class MySparkExample {
 
+    /**
+     * El método principal de la clase MySparkExample.
+     * @param args Argumentos de línea de comandos (no se utilizan en este ejemplo).
+     * @throws IOException Excepción lanzada en caso de errores de entrada/salida.
+     */
     public static void main(String[] args) throws IOException{
         // GET
         HttpServer.get("/hello", str -> HttpServer.helloFormer(str));
