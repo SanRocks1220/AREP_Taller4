@@ -161,7 +161,17 @@ Cuando el usuario envía el formulario, el servidor obtiene el nombre del archiv
 Ejemplo realizado son ayuda de [ChatGPT](https://chat.openai.com)
 
 ## Ejecución de Proyecto en diferentes OS
-- Pendiente
+* Windows:
+   - ![image](https://github.com/SanRocks1220/AREP_Taller3/assets/99696682/85bd7cdf-4169-4b9d-872e-bb2ba296cac7)
+   - ![image](https://github.com/SanRocks1220/AREP_Taller3/assets/99696682/6ec0867b-c5b4-4420-bf47-47e53cd58761)
+   - ![image](https://github.com/SanRocks1220/AREP_Taller3/assets/99696682/76d3c6dc-a95b-47cb-93a1-09e67c86cc5c)
+
+* Kali - Linux
+   - ![image](https://github.com/SanRocks1220/AREP_Taller3/assets/99696682/009295e2-e0c9-4aea-aa6e-fbe2f4aff4bd)
+   - ![image](https://github.com/SanRocks1220/AREP_Taller3/assets/99696682/96728593-19d5-4f26-9415-a86900b5a296)
+   - Parece que no puede encontrar el path correcto...
+
+
 
 ## Autor
 
