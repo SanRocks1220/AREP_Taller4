@@ -175,10 +175,10 @@ public class HttpServer {
             fileData = getFromCache(fileName);
         } else {
             if(!img){
-                fileData = getFiles("AREP-Taller3-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
+                fileData = getFiles("AREP-Taller4-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
                 saveInCache(fileName, fileData);
             } else {
-                byte[] imageBytes = getImageBytes("AREP-Taller3-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
+                byte[] imageBytes = getImageBytes("AREP-Taller4-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
                 fileData = Base64.getEncoder().encodeToString(imageBytes);
                 saveInCache(fileName, fileData);
             }
