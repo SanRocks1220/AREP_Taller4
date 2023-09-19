@@ -1,3 +1,8 @@
+/**
+ * Clase que actúa como controlador para gestionar las solicitudes web relacionadas con "/hello".
+ * Está marcada con la anotación "@Component", lo que indica que es un componente gestionado por el sistema.
+ * @Author Santiago Andrés Rocha
+ */
 package edu.escuelaing.arep.controller;
 
 import edu.escuelaing.arep.HttpServer;
@@ -5,15 +10,22 @@ import edu.escuelaing.arep.controller.annotations.Component;
 import edu.escuelaing.arep.controller.annotations.RequestMapping;
 
 @Component
-public class HelloController {
+public class helloController {
+    
+    /**
+     * Método manejador de solicitud para la ruta "/hello".
+     * Devuelve una respuesta HTTP que contiene una página HTML básica con un saludo.
+     * Está marcado con la anotación "@RequestMapping" para indicar la URL asociada.
+     * @return Una cadena que representa la respuesta HTTP.
+     */
     @RequestMapping(value = "/hello")
     public static String index() {
         return indexResponse();
     }
 
     /**
-     * Genera una respuesta HTML con un formulario básico.
-     * @return Respuesta HTML que muestra un formulario.
+     * Método privado que genera la respuesta HTML para la página de saludo.
+     * @return Una cadena que contiene la respuesta HTML.
      */
     public static String indexResponse() {
         String outputLine = "HTTP/1.1 200 OK\r\n"
@@ -35,7 +47,6 @@ public class HelloController {
                 + "            </div>\r\n"
                 + "    </body>\r\n"
                 + "</html>";
-    
         return outputLine;
     }
 }

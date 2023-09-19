@@ -1,3 +1,9 @@
+/**
+ * Clase de anotación que marca una clase como un componente gestionado por el sistema.
+ * Las clases marcadas con esta anotación pueden ser detectadas y gestionadas automáticamente
+ * por mecanismos como la inyección de dependencias.
+ * @Author Santiago Andrés Rocha
+ */
 package edu.escuelaing.arep.controller.annotations;
 
 import java.lang.annotation.ElementType;
