@@ -1,13 +1,22 @@
 package edu.escuelaing.arep;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import edu.escuelaing.arep.controller.annotations.Component;
+import edu.escuelaing.arep.controller.annotations.RequestMapping;
 
 /**
  * Clase que implementa un servidor HTTP básico para solicitar archivos desde el disco duro.
@@ -16,7 +25,7 @@ import java.util.concurrent.Executors;
  */
 public class HttpServer {
 
-    static ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
     static ExecutorService threadPool = Executors.newFixedThreadPool(10); // Se puede ajustar el número de hilos
 
     public static ServerSocket serverSocket;
@@ -24,7 +33,8 @@ public class HttpServer {
 
     public static PrintWriter out;
 
-    private static Map<String, ServicioStr> servicios = new HashMap<String, ServicioStr>();
+    private static Map<String, Method> servicios = new HashMap<String, Method>();
+    private final static String root = "edu/escuelaing/arep/controller";
 
     /**
      * Constructor privado de la clase HttpServer.
@@ -44,7 +54,7 @@ public class HttpServer {
      * Obtiene el mapa de servicios registrados en el servidor.
      * @return Un mapa que contiene los servicios registrados con sus rutas como clave.
      */
-    public static Map<String, ServicioStr> getServicios() {
+    public static Map<String, Method> getServicios() {
         return servicios;
     }
 
@@ -53,7 +63,7 @@ public class HttpServer {
      * @param url URL del servicio.
      * @param service Servicio que implementa la interfaz ServicioStr.
      */
-    public static void get(String url, ServicioStr service){
+    public static void get(String url, Method service){
         servicios.put(url, service);
     }
 
@@ -62,7 +72,7 @@ public class HttpServer {
      * @param url URL del servicio.
      * @param service Servicio que implementa la interfaz ServicioStr.
      */
-    public static void post(String url, ServicioStr service){
+    public static void post(String url, Method service){
         servicios.put(url, service);
     }
 
@@ -71,7 +81,7 @@ public class HttpServer {
      * @param resource URL del servicio a buscar.
      * @return Servicio que responde a la URL especificada.
      */
-    public static ServicioStr buscar(String resource){
+    public static Method buscar(String resource){
         return servicios.get(resource);
     }
 
@@ -80,8 +90,27 @@ public class HttpServer {
      * Escucha y maneja solicitudes entrantes en un bucle infinito.
      * @param args Argumentos para la inicialización de la clase.
      * @throws IOException Excepción arrojada en caso de no poder establecer la conexión.
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
      */
-     public void start(String[] args) {
+     public void run(String[] args) throws IOException, ClassNotFoundException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+
+        List<Class<?>> classes = getClasses();
+        for (Class<?> clasS:classes){
+            if(clasS.isAnnotationPresent(Component.class)){
+                Class<?> c = Class.forName(clasS.getName());
+                Method[] methods = c.getMethods();
+                for (Method method: methods){
+                    if(method.isAnnotationPresent(RequestMapping.class)){
+                        String key = method.getAnnotation(RequestMapping.class).value();
+                        servicios.put(key,method);
+                    }
+                }
+            }
+        }
+
+
         try {
             serverSocket = new ServerSocket(35000);
             System.out.println("Listo para recibir...");
@@ -108,11 +137,42 @@ public class HttpServer {
         }
     }
 
+    private static List<Class<?>> getClasses(){
+        List<Class<?>> classes = new ArrayList<>();
+        try{
+            for (String cp: classPaths()){
+                File file = new File(cp + "/" + root);
+                if(file.exists() && file.isDirectory()){
+                    for (File cf: Objects.requireNonNull(file.listFiles())){
+                        if(cf.isFile() && cf.getName().endsWith(".class")){
+                            String rootTemp = root.replace("/",".");
+                            String className = rootTemp+"."+cf.getName().replace(".class","");
+                            Class<?> clasS =  Class.forName(className);
+                            classes.add(clasS);
+                        }
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return classes;
+    }
+
+    private static ArrayList<String> classPaths(){
+        String classPath = System.getProperty("java.class.path");
+        String[] classPaths =  classPath.split(System.getProperty("path.separator"));
+        return new ArrayList<>(Arrays.asList(classPaths));
+    }
+
     /**
      * Procesa una solicitud HTTP entrante.
      * @param clientSocket Socket destinado a la conexión con el cliente.
+     * @throws InvocationTargetException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
      */
-    public void handleRequest(Socket clientSocket) {
+    public static void handleRequest(Socket clientSocket) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         try {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -135,9 +195,14 @@ public class HttpServer {
             if(!uriString.equals("/favicon.ico") && !uriString.equals("/")){
                 String[] uriParts = uriString.split("\\?");
                 String serviceToUse = uriParts[0];
-                String strToGive = uriParts[1].split("=")[1];
 
-                outputLine = buscar(serviceToUse).handle(strToGive);
+                System.out.println(serviceToUse);
+
+                //String strToGive = uriParts[1].split("=")[1];
+                System.out.println(servicios.containsKey(serviceToUse));
+                if(servicios.containsKey(serviceToUse)){
+                    outputLine = servicios.get(serviceToUse).invoke(null).toString();
+                }
             } else {
                 outputLine = indexResponse();
             }
@@ -175,10 +240,10 @@ public class HttpServer {
             fileData = getFromCache(fileName);
         } else {
             if(!img){
-                fileData = getFiles("AREP-Taller4-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
+                fileData = getFiles("webAppWithFiles\\src\\main\\resources\\" + fileName);
                 saveInCache(fileName, fileData);
             } else {
-                byte[] imageBytes = getImageBytes("AREP-Taller4-RochaSantiago\\webAppWithFiles\\src\\main\\resources\\" + fileName);
+                byte[] imageBytes = getImageBytes("webAppWithFiles\\src\\main\\resources\\" + fileName);
                 fileData = Base64.getEncoder().encodeToString(imageBytes);
                 saveInCache(fileName, fileData);
             }
@@ -192,6 +257,7 @@ public class HttpServer {
                     + "<html>\r\n"
                     + "    <head>\r\n"
                     + "        <title>File Content</title>\r\n"
+                    + getCSS()
                     + "    </head>\r\n"
                     + "    <body>\r\n"
                     + "         <center><img src=\"data:image/jpeg;base64," + fileData + "\" alt=\"Mi Imagen\"></center>" + "\r\n"
@@ -207,6 +273,7 @@ public class HttpServer {
             + "    <head>\r\n"
             + "        <meta charset=\"UTF-8\">\r\n"
             + "        <title>File Content</title>\r\n"
+            + getCSS()
             + "    </head>\r\n"
             + "    <body>\r\n"
             + "<pre>" + fileData + "</pre>\r\n"

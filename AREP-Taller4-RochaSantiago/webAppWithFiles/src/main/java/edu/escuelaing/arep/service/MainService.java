@@ -1,12 +1,15 @@
-package edu.escuelaing.arep;
+package edu.escuelaing.arep.service;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+
+import edu.escuelaing.arep.HttpServer;
 
 /**
  * Clase que contiene el punto de entrada principal para iniciar el servidor HTTP y definir las rutas de las solicitudes GET y POST.
  * @author Santiago Andres Rocha C.
  */
-public class MySparkExample {
+public class MainService {
 
     /**
      * El método principal de la clase MySparkExample.
@@ -14,15 +17,11 @@ public class MySparkExample {
      * @throws IOException Excepción lanzada en caso de errores de entrada/salida.
      */
     public static void main(String[] args) throws IOException{
-        // GET
-        HttpServer.get("/hello", str -> HttpServer.helloFormer(str));
-        HttpServer.get("/getFileData", str -> HttpServer.getFileData(str));
-
-        //POST
-        HttpServer.post("/helloPost", str -> HttpServer.helloFormer(str));
-        HttpServer.post("/getFileDataPost", str -> HttpServer.getFileData(str));
-
-        //Start App
-        HttpServer.getInstance().start(args);
+        HttpServer server = HttpServer.getInstance();
+        try {
+            server.run(args);
+        } catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
 }
