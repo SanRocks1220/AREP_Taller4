@@ -34,10 +34,11 @@ Para usar este proyecto, siga estos pasos:
 
 1. Clone el repositorio en su máquina local.
 2. Compile el proyecto utilizando Maven o una herramienta similar.
-3. Para ejecutar el servidor, utilice el siguiente comando en la línea de comandos: `java -cp target/classes edu.escuelaing.arep.service.MainService`
-4. El servidor se iniciará y estará listo para recibir solicitudes en el puerto 35000 (puede cambiar el puerto si es necesario).
-5. Puede definir servicios web agregando clases con anotaciones `@Component` y `@RequestMapping` en el proyecto.
-6. Acceda a los servicios utilizando su navegador o herramientas de cliente HTTP.
+3. Ubicarse en el directorio `AREP-Taller4-RochaSantiago\webAppWithFiles`
+5. Para ejecutar el servidor, utilice el siguiente comando en la línea de comandos: `java -cp target/classes edu.escuelaing.arep.service.MainService`
+6. El servidor se iniciará y estará listo para recibir solicitudes en el puerto 35000 (puede cambiar el puerto si es necesario).
+7. Puede definir servicios web agregando clases con anotaciones `@Component` y `@RequestMapping` en el proyecto.
+8. Acceda a los servicios utilizando su navegador o herramientas de cliente HTTP.
 
 ## Autor
 
