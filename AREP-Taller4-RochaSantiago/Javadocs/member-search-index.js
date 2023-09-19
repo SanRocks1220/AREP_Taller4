@@ -1,1 +1,0 @@
-memberSearchIndex = [{"p":"edu.escuelaing.arep","c":"MySparkExample","l":"main(String[])","u":"main(java.lang.String[])"},{"p":"edu.escuelaing.arep","c":"MySparkExample","l":"MySparkExample()","u":"%3Cinit%3E()"}];updateSearchResults();
