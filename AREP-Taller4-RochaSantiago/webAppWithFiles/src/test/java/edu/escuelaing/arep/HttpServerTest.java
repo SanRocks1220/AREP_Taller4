@@ -96,6 +96,7 @@ public class HttpServerTest {
                 "    <head>\r\n" +
                 "        <meta charset=\"UTF-8\">\r\n" +
                 "        <title>File Content</title>\r\n" +
+                HttpServer.getCSS() +
                 "    </head>\r\n" +
                 "    <body>\r\n" +
                 "<pre>El archivo no existe</pre>\r\n" +
