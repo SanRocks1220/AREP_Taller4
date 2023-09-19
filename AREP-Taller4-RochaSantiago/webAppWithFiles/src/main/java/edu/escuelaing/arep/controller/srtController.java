@@ -1,14 +1,14 @@
-/**
- * Clase que actúa como controlador para gestionar solicitudes web relacionadas con archivos estáticos.
- * Está marcada con la anotación "@Component", lo que indica que es un componente gestionado por el sistema.
- * @Author Santiago Andrés Rocha
- */
 package edu.escuelaing.arep.controller;
 
 import edu.escuelaing.arep.HttpServer;
 import edu.escuelaing.arep.controller.annotations.Component;
 import edu.escuelaing.arep.controller.annotations.RequestMapping;
 
+/**
+ * Clase que actúa como controlador para gestionar solicitudes web relacionadas con archivos estáticos.
+ * Está marcada con la anotación "@Component", lo que indica que es un componente gestionado por el sistema.
+ * @Author Santiago Andrés Rocha
+ */
 @Component
 public class srtController {
     /**

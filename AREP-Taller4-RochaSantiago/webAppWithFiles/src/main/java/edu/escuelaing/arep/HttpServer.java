@@ -37,8 +37,8 @@ public class HttpServer {
     private final static String root = "edu/escuelaing/arep/controller";
 
     /**
-     * Constructor privado de la clase HttpServer.
-     * Utiliza el patrón Singleton para asegurar una sola instancia de HttpServer.
+     * Clase que actúa como servidor HTTP para manejar solicitudes web.
+     * Implementa la funcionalidad básica para gestionar solicitudes GET y POST, así como el enrutamiento de servicios.
      */
     private HttpServer(){}
 
@@ -61,7 +61,7 @@ public class HttpServer {
     /**
      * Registra un servicio para responder a solicitudes GET.
      * @param url URL del servicio.
-     * @param service Servicio que implementa la interfaz ServicioStr.
+     * @param service Servicio que implementa.
      */
     public static void get(String url, Method service){
         servicios.put(url, service);
@@ -70,7 +70,7 @@ public class HttpServer {
     /**
      * Registra un servicio para responder a solicitudes POST.
      * @param url URL del servicio.
-     * @param service Servicio que implementa la interfaz ServicioStr.
+     * @param service Servicio que implementa.
      */
     public static void post(String url, Method service){
         servicios.put(url, service);
@@ -90,11 +90,12 @@ public class HttpServer {
      * Escucha y maneja solicitudes entrantes en un bucle infinito.
      * @param args Argumentos para la inicialización de la clase.
      * @throws IOException Excepción arrojada en caso de no poder establecer la conexión.
-     * @throws InvocationTargetException
-     * @throws IllegalArgumentException
+     * @throws ClassNotFoundException
      * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     * @throws InvocationTargetException
      */
-     public void run(String[] args) throws IOException, ClassNotFoundException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+    public void run(String[] args) throws IOException, ClassNotFoundException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 
         List<Class<?>> classes = getClasses();
         for (Class<?> clasS:classes){
@@ -282,7 +283,6 @@ public class HttpServer {
         return response;
     }
 
-    
     /**
      * Verifica si un archivo ya ha sido consultado previamente y está en caché.
      * @param fileName Nombre del archivo a buscar en caché.
@@ -291,8 +291,6 @@ public class HttpServer {
     public static boolean inCache(String fileName) {
         return cache.containsKey(fileName);
     }
-    
-
     
     /**
      * Obtiene los datos de un archivo desde el caché.
@@ -303,7 +301,6 @@ public class HttpServer {
         System.out.println("Ya está en caché, no busca en el Disco Duro");
         return cache.get(fileName);
     }
-
     
     /**
      * Guarda los datos de un archivo en caché.
